@@ -1,4 +1,7 @@
-; See https://emacs.stackexchange.com/questions/5828/why-do-i-have-to-add-each-package-to-load-path-or-problem-with-require-package
+;;; MY CONFIGURATION FOR EMACS
+
+
+;See https://emacs.stackexchange.com/questions/5828/why-do-i-have-to-add-each-package-to-load-path-or-problem-with-require-package
 ; Manually load package instead of waiting until after init.el is loaded
 (package-initialize)
 ; Disable loading package again after init.el
@@ -10,7 +13,7 @@
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-;(add-to-list 'package-archives '("elpy" . "https://jorgenschaefer.github.io/packages/"))
+(add-to-list 'package-archives '("elpy" . "https://jorgenschaefer.github.io/packages/"))
 
 ; Use "package" to install "use-package", a better package management and config system
 (unless (package-installed-p 'use-package)
@@ -19,11 +22,6 @@
 
 (eval-when-compile
   (require 'use-package))
-
-; Make OS shell path available in emacs exec path
-;(use-package exec-path-from-shell
-;  :ensure t
-;  :config (exec-path-from-shell-copy-env "PATH"))
 
 
 ; Create a 80-character line marker
@@ -61,25 +59,6 @@
   (setq reftex-plug-into-AUCTeX t)
   (setq reftex-default-bibliography '("C:\texlive\texmf-local\bibtex\bib\locall\library.bib")))
 
-; Set up elpy for Python in Emacs
-;(use-package elpy
-;  :ensure t				
-;  :pin elpy
-;  :config
-;  (elpy-enable)
-  ;; Enable elpy in a Python mode
-;  (add-hook 'python-mode-hook 'elpy-mode)
-;  (setq elpy-rpc-backend "jedi")
-  ;; Open the Python shell in a buffer after sending code to it
-;  (add-hook 'inferior-python-mode-hook 'python-shell-switch-to-shell)
-  ;; Use IPython as the default shell, with a workaround to accommodate IPython 5
-  ;; https://emacs.stackexchange.com/questions/24453/weird-shell-output-when-using-ipython-5  (setq python-shell-interpreter "ipython")
-;  (setq python-shell-interpreter-args "--simple-prompt -i")
-  ;; Enable pyvenv, which manages Python virtual environments
-;  (pyvenv-mode 1)
-  ;; Tell Python debugger (pdb) to use the current virtual environment
-  ;; https://emacs.stackexchange.com/questions/17808/enable-python-pdb-on-emacs-with-virtualenv
-;:  (setq gud-pdb-command-name "python -m pdb "))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -121,15 +100,6 @@
   (define-key company-active-map (kbd "TAB") 'company-complete-common)
   ;; Set up M-h to see the documentation for items on the autocomplete menu
   (define-key company-active-map (kbd "M-h") 'company-show-doc-buffer))
-
-
-; Set up company-jedi, i.e. tell elpy to use company autocomplete backend
-;:(use-package company-jedi
-;  :ensure t
-;  :config
-;  (defun my/python-mode-hook ()
-;    (add-to-list 'company-backends 'company-jedi))
-;  (add-hook 'python-mode-hook 'my/python-mode-hook))
 
 
 
@@ -223,6 +193,8 @@
 ; Make Emacs highlight paired parentheses
 (show-paren-mode 1)
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -244,6 +216,70 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;   MAGIT   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,,,,,
+
+;; https://github.com/inkel/emacs-d/blob/master/init.el
+
+;;;; magit
+(use-package magit
+  :ensure t
+  :defer t
+  :bind (("C-x g" . magit-status))
+  :config
+  (progn
+    (defun inkel/magit-log-edit-mode-hook ()
+      (setq fill-column 72)
+      (flyspell-mode t)
+      (turn-on-auto-fill))
+    (add-hook 'magit-log-edit-mode-hook 'inkel/magit-log-edit-mode-hook)
+    (defadvice magit-status (around magit-fullscreen activate)
+      (window-configuration-to-register :magit-fullscreen)
+      ad-do-it
+      (delete-other-windows))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;   PYTHON   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,,,,,
+
+;; Based on https://realpython.com/emacs-the-best-python-editor/
+
+(add-to-list 'load-path
+              "~/.emacs.d/plugins/yasnippet")
+(require 'yasnippet)
+(yas-global-mode 1)
+
+(defvar myPackages
+  '(better-defaults
+    ein ;; add the ein package (Emacs ipython notebook)
+    elpy
+    flycheck
+    material-theme
+    py-autopep8))
+
+(elpy-enable)
+(setq python-shell-interpreter "ipython"
+      python-shell-interpreter-args "-i --simple-prompt")
+
+;; Better Syntax Checking
+
+
+(when (require 'flycheck nil t)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+;; PEP8 Compliance
+
+(add-to-list 'load-path
+              "~/.emacs.d/elpa/py-autopep8.el")
+(require 'py-autopep8)
+(add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 (custom-set-variables
@@ -257,13 +293,11 @@
  '(inferior-STA-program-name "stata-se")
  '(package-selected-packages
    (quote
-    (markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
+    (highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-
 
