@@ -59,6 +59,15 @@
   (setq reftex-plug-into-AUCTeX t)
   (setq reftex-default-bibliography '("C:\texlive\texmf-local\bibtex\bib\locall\library.bib")))
 
+;; Themes
+
+(add-to-list 'load-path "~/.emacs.d/extra/")
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+(load-theme 'deeper-blue t)
+
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -253,27 +262,31 @@
   '(better-defaults
     ein ;; add the ein package (Emacs ipython notebook)
     elpy
-    flycheck
+    ;;flycheck
     material-theme
     py-autopep8))
 
 (elpy-enable)
 (setq python-shell-interpreter "ipython"
-      python-shell-interpreter-args "-i --simple-prompt")
+      python-shell-interpreter-args "-i --simple-prompt --pylab=inline")
 
 ;; Better Syntax Checking
+;(when (require 'flycheck nil t)
+;  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+;  (add-hook 'elpy-mode-hook 'flycheck-mode))
 
-
-(when (require 'flycheck nil t)
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-  (add-hook 'elpy-mode-hook 'flycheck-mode))
+;(setq flycheck-check-syntax-automatically '(mode-enabled save idle-change))
+;(setq flycheck-highlighting-mode 'lines)
+;(setq flycheck-indication-mode 'left-fringe)
+;(setq flycheck-checker-error-threshold 2000)
+                    
 
 ;; PEP8 Compliance
 
-(add-to-list 'load-path
-              "~/.emacs.d/elpa/py-autopep8.el")
-(require 'py-autopep8)
-(add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
+;(add-to-list 'load-path
+;              "~/.emacs.d/elpa/py-autopep8.el")
+;(require 'py-autopep8)
+;(add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -296,6 +309,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; IDO
+(require 'ido)
+(ido-mode t)
+
+; syntax highlighting everywhere
+(global-font-lock-mode 1)
+
+; Add proper word wrapping
+(global-visual-line-mode t)
+
+;; Set the frame title as by http://www.emacswiki.org/emacs/FrameTitle
+(setq frame-title-format (list "%b ☺ " (user-login-name) "@" (system-name) "%[ - GNU %F " emacs-version)
+      icon-title-format (list "%b ☻ " (user-login-name) "@" (system-name) " - GNU %F " emacs-version))
+
+
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -305,6 +334,9 @@
  '(TeX-source-correlate-method (quote synctex))
  '(TeX-source-correlate-mode t)
  '(TeX-source-correlate-start-server t)
+ '(custom-safe-themes
+   (quote
+    ("bf3ec301ea82ab546efb39c2fdd4412d1188c7382ff3bbadd74a8ecae4121678" "d737a2131d5ac01c0b2b944e0d2cb0be1c76496bb4ed61be51ff0e5457468974" default)))
  '(inferior-STA-program-name "stata-se")
  '(package-selected-packages
    (quote
@@ -315,4 +347,3 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
