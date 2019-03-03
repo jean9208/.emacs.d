@@ -1,4 +1,4 @@
-;;; MY CONFIGURATION FOR EMACS
+﻿;;; MY CONFIGURATION FOR EMACS
 
 
 ;See https://emacs.stackexchange.com/questions/5828/why-do-i-have-to-add-each-package-to-load-path-or-problem-with-require-package
@@ -63,14 +63,40 @@
 
 (add-to-list 'load-path "~/.emacs.d/extra/")
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
-(load-theme 'deeper-blue t)
-
-
-
-
+(load-theme 'nova t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+;;;;;;;;;;;;;;          ORG MODE        ;;;;;;;;;;;;;;;;;;;;;
+
+(global-set-key (kbd "C-c l") 'org-store-link)
+(global-set-key (kbd "C-c a") 'org-agenda)
+(global-set-key (kbd "C-c c") 'org-capture)
+(setq org-log-done 'time)
+
+(setq org-agenda-files (list "C:/Users/Jean/Documents/Agenda/Cimat.org"
+                             "C:/Users/Jean/Documents/Agenda/Trabajo.org" 
+                             "C:/Users/Jean/Documents/Agenda/Personal.org"))
+
+; Enable Languages
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;          BASH ON WINDOWS ON EMACS        ;;;;;;;;;;;;;;;;;;;;;
+
+;; (defun my-bash-on-windows-shell ()
+;;   (let ((explicit-shell-file-name "C:/Windows/System32/bash.exe"))
+;;     (shell)))
+;; (my-bash-on-windows-shell)
+; PS1='\u@\h:\w\$ '
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;          PROJECTILE        ;;;;;;;;;;;;;;;;;;;;;
 
@@ -109,6 +135,42 @@
   (define-key company-active-map (kbd "TAB") 'company-complete-common)
   ;; Set up M-h to see the documentation for items on the autocomplete menu
   (define-key company-active-map (kbd "M-h") 'company-show-doc-buffer))
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;     Markdown       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+; Set up markdown in Emacs
+; Tutorial: http://jblevins.org/projects/markdown-mode/
+(use-package pandoc-mode
+  :ensure t
+  :config
+  (add-hook 'markdown-mode-hook 'pandoc-mode))
+
+(add-hook 'text-mode-hook (lambda() (flyspell-mode 1)))
+
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "pandoc"))
+
+; C-n add new lines at the end of buffer
+(setq next-line-add-newlines t)
+; open emacs full screen
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+; Make Emacs highlight paired parentheses
+(show-paren-mode 1)
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 
@@ -171,40 +233,208 @@
 )
 (global-set-key (kbd "\C-cn") 'ess-readnextline)
 
+;; https://github.com/chuvanan/dot-files/blob/master/emacs-init.el
+(setq inferior-R-args "--no-restore-history --no-save")
+
+;; syntax highlight
+(setq ess-R-font-lock-keywords
+      (quote
+       ((ess-R-fl-keyword:modifiers . t)
+        (ess-R-fl-keyword:fun-defs . t)
+        (ess-R-fl-keyword:keywords . t)
+        (ess-R-fl-keyword:assign-ops)
+        (ess-R-fl-keyword:constants . t)
+        (ess-fl-keyword:fun-calls . t)
+        (ess-fl-keyword:numbers . t)
+        (ess-fl-keyword:operators)
+        (ess-fl-keyword:delimiters)
+        (ess-fl-keyword:=)
+        (ess-R-fl-keyword:F&T)
+        (ess-R-fl-keyword:%op%))))
+
+(setq inferior-ess-r-font-lock-keywords
+      (quote
+       ((ess-S-fl-keyword:prompt . t)
+        (ess-R-fl-keyword:messages . t)
+        (ess-R-fl-keyword:modifiers . t)
+        (ess-R-fl-keyword:fun-defs . t)
+        (ess-R-fl-keyword:keywords . t)
+        (ess-R-fl-keyword:assign-ops)
+        (ess-R-fl-keyword:constants . t)
+        (ess-fl-keyword:matrix-labels)
+        (ess-fl-keyword:fun-calls)
+        (ess-fl-keyword:numbers)
+        (ess-fl-keyword:operators)
+        (ess-fl-keyword:delimiters)
+        (ess-fl-keyword:=)
+        (ess-R-fl-keyword:F&T))))
+
+;; %>% operator
+(defun anchu/isnet_then_R_operator ()
+  "R - %>% operator or 'then' pipe operator"
+  (interactive)
+  (just-one-space 1)
+  (insert "%>%")
+  (reindent-then-newline-and-indent))
+
+(define-key ess-mode-map (kbd "C-S-m") 'anchu/isnet_then_R_operator)
+(define-key inferior-ess-mode-map (kbd "C-S-m") 'anchu/isnet_then_R_operator)
+
+
+(defun anchu/ess-rmarkdown ()
+  "Compile R markdown (.Rmd). Should work for any output type."
+  (interactive)
+  ;; Check if attached R-session
+  (condition-case nil
+      (ess-get-process)
+    (error
+     (ess-switch-process)))
+  (let* ((rmd-buf (current-buffer)))
+    (save-excursion
+      (let* ((sprocess (ess-get-process ess-current-process-name))
+             (sbuffer (process-buffer sprocess))
+             (buf-coding (symbol-name buffer-file-coding-system))
+             (R-cmd
+              (format "library(rmarkdown); rmarkdown::render(\"%s\")"
+                      buffer-file-name)))
+        (message "Running rmarkdown on %s" buffer-file-name)
+        (ess-execute R-cmd 'buffer nil nil)
+        (switch-to-buffer rmd-buf)
+        (ess-show-buffer (buffer-name sbuffer) nil)))))
+
+(define-key polymode-mode-map "\M-ns" 'anchu/ess-rmarkdown)
+
+(defun anchu/ess-rshiny ()
+  "Compile R markdown (.Rmd). Should work for any output type."
+  (interactive)
+  ;; Check if attached R-session
+  (condition-case nil
+      (ess-get-process)
+    (error
+     (ess-switch-process)))
+  (let* ((rmd-buf (current-buffer)))
+    (save-excursion
+      (let* ((sprocess (ess-get-process ess-current-process-name))
+             (sbuffer (process-buffer sprocess))
+             (buf-coding (symbol-name buffer-file-coding-system))
+             (R-cmd
+              (format "library(rmarkdown); rmarkdown::run(\"%s\")"
+                      buffer-file-name)))
+        (message "Running shiny on %s" buffer-file-name)
+        (ess-execute R-cmd 'buffer nil nil)
+        (switch-to-buffer rmd-buf)
+        (ess-show-buffer (buffer-name sbuffer) nil)))))
+
+(define-key polymode-mode-map "\M-nr" 'anchu/ess-rshiny)
+
+(defun anchu/ess-publish-rmd ()
+  "Publish R Markdown (.Rmd) to remote server"
+  (interactive)
+  ;; Check if attached R-session
+  (condition-case nil
+      (ess-get-process)
+    (error
+     (ess-switch-process)))
+  (let* ((rmd-buf (current-buffer)))
+    (save-excursion
+      ;; assignment
+      (let* ((sprocess (ess-get-process ess-current-process-name))
+             (sbuffer (process-buffer sprocess))
+             (buf-coding (symbol-name buffer-file-coding-system))
+             (R-cmd
+              (format "workflow::wf_publish_rmd(\"%s\")"
+                      buffer-file-name)))
+        ;; execute
+        (message "Publishing rmarkdown on %s" buffer-file-name)
+        (ess-execute R-cmd 'buffer nil nil)
+        (switch-to-buffer rmd-buf)
+        (ess-show-buffer (buffer-name sbuffer) nil)))))
+
+(define-key polymode-mode-map "\M-np" 'anchu/ess-publish-rmd)
+
+(defun anchu/insert-minor-section ()
+  "Insert minor section heading for a snippet of R codes."
+  (interactive)
+  (insert "## -----------------------------------------------------------------------------\n")
+  (insert "## "))
+
+(define-key ess-mode-map (kbd "C-c C-a n") 'anchu/insert-minor-section)
+
+(defun anchu/insert-r-code-chunk ()
+  "Insert R Markdown code chunk."
+  (interactive)
+  (insert "```{r, include=FALSE}\n")
+  (insert "\n")
+  (save-excursion
+    (insert "\n")
+    (insert "\n")
+    (insert "```\n")))
+
+(define-key polymode-mode-map (kbd "C-c C-a c") 'anchu/insert-r-code-chunk)
+
+(defun anchu/insert-major-section ()
+  "Insert major section heading for a block of R codes."
+  (interactive)
+  (insert "## -----------------------------------------------------------------------------\n")
+  (insert "## ")
+  (save-excursion
+    (insert "\n")
+    (insert "## -----------------------------------------------------------------------------\n")))
+
+(define-key ess-mode-map (kbd "C-c C-a m") 'anchu/insert-major-section)
+
+(defun anchu/insert-resource-header ()
+  "Insert yaml-like header for R script resources."
+  (interactive)
+  (insert "## -----------------------------------------------------------------------------\n")
+  (insert "## code: ")
+  (save-excursion
+    (insert "\n")
+    (insert "## description: \n")
+    (insert "## author: \n")
+    (insert (concat "## date: " (current-time-string) "\n"))
+    (insert "## -----------------------------------------------------------------------------\n")))
+
+(define-key ess-mode-map (kbd "C-c C-a r") 'anchu/insert-resource-header)
+
+(defun anchu/insert-yalm-header ()
+  "Insert Rmd header."
+  (interactive)
+  (insert "---\n")
+  (insert "title: ")
+  (save-excursion
+    (newline)
+    (insert "author: \n")
+    (insert "date: \"`r format(Sys.time(), '%d-%m-%Y %H:%M:%S')`\"\n")
+    (insert "runtime: shiny\n")
+    (insert "output:\n")
+    (indent-to-column 4)
+    (insert "html_document:\n")
+    (indent-to-column 8)
+    (insert "theme: flatly\n")
+    (insert "---")
+    (newline)))
+
+(define-key polymode-mode-map (kbd "C-c C-a y") 'anchu/insert-yalm-header)
+
+(defun anchu/insert-named-comment (cmt)
+  "Make comment header"
+  (interactive "sEnter your comment: ")
+  (let* ((user-cmt (concat "## " cmt " "))
+         (len-user-cmt (length user-cmt))
+         (len-hyphen (- 80 len-user-cmt)))
+    (insert user-cmt (apply 'concat (make-list len-hyphen "-")))
+    (newline)
+    (newline)
+    )
+  )
+
+(define-key ess-mode-map (kbd "C-c C-a d") 'anchu/insert-named-comment)
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
 
 
-
-
-;;;;;;;;;;;;;;;;;;;;;;;     Markdown       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
-; Set up markdown in Emacs
-; Tutorial: http://jblevins.org/projects/markdown-mode/
-(use-package pandoc-mode
-  :ensure t
-  :config
-  (add-hook 'markdown-mode-hook 'pandoc-mode))
-
-(add-hook 'text-mode-hook (lambda() (flyspell-mode 1)))
-
-(use-package markdown-mode
-  :ensure t
-  :commands (markdown-mode gfm-mode)
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "pandoc"))
-
-; C-n add new lines at the end of buffer
-(setq next-line-add-newlines t)
-; open emacs full screen
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
-; Make Emacs highlight paired parentheses
-(show-paren-mode 1)
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 
@@ -340,7 +570,7 @@
  '(inferior-STA-program-name "stata-se")
  '(package-selected-packages
    (quote
-    (highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
+    (orgalist ztree highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
