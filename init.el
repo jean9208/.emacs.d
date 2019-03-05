@@ -7,6 +7,8 @@
 ; Disable loading package again after init.el
 (setq package-enable-at-startup nil)
 
+
+
 ; Enable "package", for installing packages
 ; Add some common package repositories
 (require 'package)
@@ -14,6 +16,14 @@
 (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 (add-to-list 'package-archives '("elpy" . "https://jorgenschaefer.github.io/packages/"))
+
+;; Trick for melpa
+(when (>= emacs-major-version 24)
+  (require 'package)
+  (package-initialize)
+  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+  )
+
 
 ; Use "package" to install "use-package", a better package management and config system
 (unless (package-installed-p 'use-package)
@@ -61,9 +71,9 @@
 
 ;; Themes
 
-(add-to-list 'load-path "~/.emacs.d/extra/")
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
-(load-theme 'nova t)
+;(add-to-list 'load-path "~/.emacs.d/extra/")
+;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+(load-theme 'spacemacs-dark t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -566,11 +576,11 @@
  '(TeX-source-correlate-start-server t)
  '(custom-safe-themes
    (quote
-    ("bf3ec301ea82ab546efb39c2fdd4412d1188c7382ff3bbadd74a8ecae4121678" "d737a2131d5ac01c0b2b944e0d2cb0be1c76496bb4ed61be51ff0e5457468974" default)))
+    ("bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "bf3ec301ea82ab546efb39c2fdd4412d1188c7382ff3bbadd74a8ecae4121678" "d737a2131d5ac01c0b2b944e0d2cb0be1c76496bb4ed61be51ff0e5457468974" default)))
  '(inferior-STA-program-name "stata-se")
  '(package-selected-packages
    (quote
-    (orgalist ztree highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
+    (spacemacs-theme orgalist ztree highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
