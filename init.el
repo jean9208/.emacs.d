@@ -1,4 +1,5 @@
-﻿;;; MY CONFIGURATION FOR EMACS
+﻿
+;;; MY CONFIGURATION FOR EMACS
 
 
 ;See https://emacs.stackexchange.com/questions/5828/why-do-i-have-to-add-each-package-to-load-path-or-problem-with-require-package
@@ -132,7 +133,7 @@
   (global-set-key (kbd "C-x C-f") 'helm-find-files))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Company  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Set up company, i.e. code autocomplete
 (use-package company
@@ -148,8 +149,63 @@
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;  Dashboard    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package dashboard
+  :ensure t
+  :config
+  (dashboard-setup-startup-hook))
 
 
+					
+; Update banner
+
+;; Set the title
+(setq dashboard-banner-logo-title "Welcome Jean!!!")
+;; Set the banner
+(setq dashboard-startup-banner 'logo)
+;; Value can be 'official which displays the official emacs logo 'logo
+;; which displays an alternative emacs logo 1, 2 or 3 which displays
+;; one of the text banners "path/to/your/image.png" which displays
+;; whatever image you would prefer
+
+;; Content is not centered by default. To center, set
+(setq dashboard-center-content t)
+
+;; To disable shortcut "jump" indicators for each section, set
+(setq dashboard-show-shortcuts nil)
+
+
+; Customize which widgets are displayed
+
+(setq dashboard-items '((recents  . 5)
+                        (bookmarks . 5)
+                        (projects . 5)
+                        (agenda . 5)
+                        (registers . 5)))
+
+
+;; Custom widget
+
+;; (defun dashboard-insert-custom (list-size)
+;;   (insert "Custom text"))
+;; (add-to-list 'dashboard-item-generators  '(custom . dashboard-insert-custom))
+;; (add-to-list 'dashboard-items '(custom) t)
+
+
+; Today's agenda
+
+(add-to-list 'dashboard-items '(agenda) t)
+
+; Agenda for upcoming seven days
+
+(setq show-week-agenda-p t)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  Windmove  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(when (fboundp 'windmove-default-keybindings)
+  (windmove-default-keybindings))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;     Markdown       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -531,6 +587,64 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;; Anaconda mode  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(add-to-list 'load-path "~/.emacs.d/anaconda-mode/anaconda-mode.el")
+(add-hook 'python-mode-hook 'anaconda-mode)
+(add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;; Emojify  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(add-hook 'after-init-hook #'global-emojify-mode)
+
+; Custom emojis
+
+;; (setq emojify-user-emojis '((":trollface:" . (("name" . "Troll Face")
+;;                                               ("image" . "~/.emacs.d/emojis/trollface.png")
+;;                                               ("style" . "github")))
+;;                             (":neckbeard:" . (("name" . "Neckbeard")
+;;                                               ("image" . "~/.emacs.d/emojis/neckbeard.png")
+;;                                               ("style" . "github")))))
+
+;; If emojify is already loaded refresh emoji data
+;; (when (featurep 'emojify)
+;;   (emojify-set-emoji-data))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;; Nyan mode  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'nyan-mode)
+(nyan-mode)
+(setq-default nyan-animate-nyancat nil)
+(setq-default nyan-animation-frame-interval 0.2)
+(setq-default nyan-bar-length 20)
+(setq-default nyan-cat-face-number 1)
+(setq-default nyan-wavy-trail t)
+(setq-default nyan-minimum-window-width 50)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;  Mode - icons    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'mode-icons)
+(mode-icons-mode)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;  Discover my major    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require 'discover-my-major)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;  C ++  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -580,10 +694,25 @@
  '(inferior-STA-program-name "stata-se")
  '(package-selected-packages
    (quote
-    (spacemacs-theme orgalist ztree highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
+    (discover-my-major mode-icons nyan-mode emojify dashboard page-break-lines pdf-tools ein spacemacs-theme orgalist ztree highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
