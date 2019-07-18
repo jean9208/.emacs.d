@@ -1,5 +1,4 @@
-﻿
-;;; MY CONFIGURATION FOR EMACS
+﻿;;; MY CONFIGURATION FOR EMACS
 
 
 ;See https://emacs.stackexchange.com/questions/5828/why-do-i-have-to-add-each-package-to-load-path-or-problem-with-require-package
@@ -60,21 +59,116 @@
 
 ; Set up auctex for Latex in Emacs
 ; Point auctex to my central .bib file
-(use-package tex
+;; (use-package tex
+;;   :ensure auctex
+;;   :config
+;;   (setq Tex-auto-save t)
+;;   (setq Tex-parse-self t)
+;;   (setq TeX-save-query nil)
+;;   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+;;   (setq reftex-plug-into-AUCTeX t)
+;;   (setq reftex-default-bibliography '("C:\texlive\texmf-local\bibtex\bib\locall\library.bib")))
+
+(use-package tex-site
   :ensure auctex
+  :mode ("\\.tex\\'" . latex-mode)
   :config
-  (setq Tex-auto-save t)
-  (setq Tex-parse-self t)
-  (setq TeX-save-query nil)
-  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-  (setq reftex-plug-into-AUCTeX t)
-  (setq reftex-default-bibliography '("C:\texlive\texmf-local\bibtex\bib\locall\library.bib")))
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq-default TeX-master nil)
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (rainbow-delimiters-mode)
+              (company-mode)
+              (smartparens-mode)
+              (turn-on-reftex)
+              (setq reftex-plug-into-AUCTeX t)
+              (reftex-isearch-minor-mode)
+              (setq TeX-PDF-mode t)
+              (setq TeX-source-correlate-method 'synctex)
+              (setq TeX-source-correlate-start-server t)))
+
+;; Update PDF buffers after successful LaTeX runs
+(add-hook 'TeX-after-TeX-LaTeX-command-finished-hook
+	  #'TeX-revert-document-buffer)
+
+;; to use pdfview with auctex
+(add-hook 'LaTeX-mode-hook 'pdf-tools-install)
+
+;; to use pdfview with auctex
+(setq TeX-view-program-selection '((output-pdf "pdf-tools"))
+       TeX-source-correlate-start-server t)
+(setq TeX-view-program-list '(("pdf-tools" "TeX-pdf-tools-sync-view"))))
+
+
+;; Tex compilation
+
+;; Escape mode
+(defun TeX-toggle-escape nil
+  (interactive)
+  "Toggle Shell Escape"
+  (setq LaTeX-command
+        (if (string= LaTeX-command "latex") "latex -shell-escape"
+          "latex"))
+  (message (concat "shell escape "
+                   (if (string= LaTeX-command "latex -shell-escape")
+                       "enabled"
+                     "disabled"))
+           )
+  )
+;;(add-to-list 'TeX-command-list
+;;             '("Make" "make" TeX-run-command nil t))
+(setq TeX-show-compilation nil)
+
+;; Redine TeX-output-mode to get the color !
+(define-derived-mode TeX-output-mode TeX-special-mode "LaTeX Output"
+  "Major mode for viewing TeX output.
+  \\{TeX-output-mode-map} "
+  :syntax-table nil
+  (set (make-local-variable 'revert-buffer-function)
+       #'TeX-output-revert-buffer)
+
+  (set (make-local-variable 'font-lock-defaults)
+       '((("^!.*" . font-lock-warning-face) ; LaTeX error
+          ("^-+$" . font-lock-builtin-face) ; latexmk divider
+          ("^\\(?:Overfull\\|Underfull\\|Tight\\|Loose\\).*" . font-lock-builtin-face)
+          ;; .....
+          )))
+
+  ;; special-mode makes it read-only which prevents input from TeX.
+  (setq buffer-read-only nil))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; Themes
 
 ;(add-to-list 'load-path "~/.emacs.d/extra/")
 ;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
 (load-theme 'spacemacs-dark t)
+
+
+;; Miscellany
+
+(fset 'yes-or-no-p 'y-or-n-p)
+
+;; Personal
+
+(setq user-full-name "Jean Arreola")
+(setq user-mail-address "jean.arreola@yahoo.com.mx")
+
+
+;; Fill Mode
+
+(use-package fill
+  :ensure nil
+  :bind
+  ("C-c F" . auto-fill-mode)
+  ;("C-c T" . toggle-truncate-lines)
+  :init (add-hook 'org-mode-hook 'turn-on-auto-fill)
+  :diminish auto-fill>-mode)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -87,7 +181,7 @@
 (setq org-log-done 'time)
 
 (setq org-agenda-files (list "C:/Users/Jean/Documents/Agenda/Cimat.org"
-                             "C:/Users/Jean/Documents/Agenda/Trabajo.org" 
+                             "C:/Users/Jean/Documents/Agenda/Trabajo.org"
                              "C:/Users/Jean/Documents/Agenda/Personal.org"))
 
 ; Enable Languages
@@ -135,17 +229,124 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Company  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Set up company, i.e. code autocomplete
 (use-package company
   :ensure t
-  :config
-  ;; Enable company mode everywhere
+  :diminish
+  :init
+  (setq company-dabbrev-ignore-case t
+        company-show-numbers t)
   (add-hook 'after-init-hook 'global-company-mode)
-  ;; Set up TAB to manually trigger autocomplete menu
-  (define-key company-mode-map (kbd "TAB") 'company-complete)
-  (define-key company-active-map (kbd "TAB") 'company-complete-common)
-  ;; Set up M-h to see the documentation for items on the autocomplete menu
-  (define-key company-active-map (kbd "M-h") 'company-show-doc-buffer))
+  :config
+  (add-to-list 'company-backends 'company-math-symbols-unicode)
+  (setq company-idle-delay t)
+  (setq company-tooltip-limit 10)
+  (setq company-minimum-prefix-length 3)
+  :bind ("C-:" . company-complete)  ; In case I don't want to wait
+  )
+
+
+(use-package company-quickhelp
+  :ensure t
+  :config
+  (company-quickhelp-mode 1))
+
+(use-package company-shell
+  :ensure t
+  :after company
+  :config
+  (add-to-list 'company-backends '(company-shell company-shell-env)))
+
+
+(use-package company-statistics
+  :after company
+  :init
+  (add-hook 'after-init-hook 'company-statistics-mode))
+
+
+(use-package auctex-latexmk
+  :ensure t
+  :after auctex
+  :init (add-hook 'LaTeX-mode-hook 'auctex-latexmk-setup))
+
+(use-package company-auctex
+  :ensure t
+  :after (company auctex)
+  :config
+  (company-auctex-init))
+
+
+(use-package company-bibtex
+  :ensure t
+  :after (company auctex)
+  :config
+  (add-to-list 'company-backends 'company-bibtex))
+
+
+;; (use-package company-math
+;;   :ensure t
+;;   :after (company auctex)
+;;   :config
+;;   ;; global activation of the unicode symbol completion
+;;   (add-to-list 'company-backends 'company-math-symbols-unicode))
+
+
+;; Things done when a file is saved
+
+;; No whitespaces at end
+
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+
+;; Update changes (no emacs)
+
+(global-auto-revert-mode t)
+
+;; Last position
+
+(save-place-mode 1)
+(setq save-place-forget-unreadable-files t
+      save-place-skip-check-regexp "\\`/\\(?:cdrom\\|floppy\\|mnt\\|/[0-9]\\|\\(?:[^@/:]*@\\)?[^@/:]*[^@/:.]:\\)")
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; UTF8
+
+;; (when (fboundp 'set-charset-priority)
+;;   (set-charset-priority 'unicode))
+;; (prefer-coding-system 'utf-8)
+;; (set-language-environment    'utf-8)
+;; (setq locale-coding-system 'utf-8)
+;; (set-default-coding-systems 'utf-8)
+;; (set-terminal-coding-system 'utf-8)
+;; (set-keyboard-coding-system 'utf-8)
+;; (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
+;; (set-selection-coding-system 'utf-8)
+;; (setq-default buffer-file-coding-system 'utf-8)
+;; (set-input-method nil)
+
+
+
+;; Accents
+
+(load-library "iso-transl")
+
+
+(tool-bar-mode -1)                                ; No quiero toolbar
+(menu-bar-mode -1)                                ; O menubar
+(unless (frame-parameter nil 'tty)                ; O scrollbar
+    (scroll-bar-mode -1))
+(blink-cursor-mode -1)                            ; No quiero que parpadee el cursor
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;  Perspective    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package perspective
+  :ensure t
+  :init (persp-mode))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 
@@ -157,7 +358,7 @@
   (dashboard-setup-startup-hook))
 
 
-					
+
 ; Update banner
 
 ;; Set the title
@@ -209,7 +410,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;     Markdown       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
+
 ; Set up markdown in Emacs
 ; Tutorial: http://jblevins.org/projects/markdown-mode/
 (use-package pandoc-mode
@@ -238,6 +439,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;;;;  Aggresive indent   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; (require 'aggressive-indent)
+; (global-aggressive-indent-mode 1)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;  Restart Emacs  ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package restart-emacs)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;          ESS        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -252,7 +467,7 @@
   (add-hook 'ess-mode-hook (lambda() (ess-set-style 'RStudio)))
   ; Make ESS use more horizontal screen
   ; http://stackoverflow.com/questions/12520543/how-do-i-get-my-r-buffer-in-emacs-to-occupy-more-horizontal-space
-  (add-hook 'ess-R-post-run-hook 'ess-execute-screen-options) 
+  (add-hook 'ess-R-post-run-hook 'ess-execute-screen-options)
   (define-key inferior-ess-mode-map "\C-cw" 'ess-execute-screen-options))
   ; Add path to Stata to Emacs' exec-path so that Stata can be found
   ;(setq exec-path (append exec-path '("/usr/local/stata14"))))
@@ -260,7 +475,7 @@
 
 ; Move up through previous commands
 (defun ess-readline ()
-  "Move to previous command entered from script *or* R-process and copy 
+  "Move to previous command entered from script *or* R-process and copy
    to prompt for execution or editing"
   (interactive)
   ;; See how many times function was called
@@ -282,7 +497,7 @@
 
 ; Move back down again
 (defun ess-readnextline ()
-  "Move to next command after the one currently copied to prompt and copy 
+  "Move to next command after the one currently copied to prompt and copy
    to prompt for execution or editing"
   (interactive)
   ;; Move to prompt and delete current input
@@ -559,8 +774,8 @@
     ein ;; add the ein package (Emacs ipython notebook)
     elpy
     ;;flycheck
-    material-theme
-    py-autopep8))
+    ;;py-autopep8
+    material-theme))
 
 (elpy-enable)
 (setq python-shell-interpreter "ipython"
@@ -575,7 +790,7 @@
 ;(setq flycheck-highlighting-mode 'lines)
 ;(setq flycheck-indication-mode 'left-fringe)
 ;(setq flycheck-checker-error-threshold 2000)
-                    
+
 
 ;; PEP8 Compliance
 
@@ -596,9 +811,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;; Dimmer  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Indicates which buffer is currently active
+
+;; (use-package dimmer
+;;   :ensure t)
+;; (dimmer-mode)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;; Emojify  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(add-hook 'after-init-hook #'global-emojify-mode)
+; (add-hook 'after-init-hook #'global-emojify-mode)
 
 ; Custom emojis
 
@@ -618,14 +846,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;; Nyan mode  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require 'nyan-mode)
-(nyan-mode)
-(setq-default nyan-animate-nyancat nil)
-(setq-default nyan-animation-frame-interval 0.2)
-(setq-default nyan-bar-length 20)
-(setq-default nyan-cat-face-number 1)
-(setq-default nyan-wavy-trail t)
-(setq-default nyan-minimum-window-width 50)
+;; (require 'nyan-mode)
+;; (nyan-mode)
+;; (setq-default nyan-animate-nyancat nil)
+;; (setq-default nyan-animation-frame-interval 0.2)
+;; (setq-default nyan-bar-length 20)
+;; (setq-default nyan-cat-face-number 1)
+;; (setq-default nyan-wavy-trail t)
+;; (setq-default nyan-minimum-window-width 50)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -644,6 +872,16 @@
 (require 'discover-my-major)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;  LILYPOND    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(setq load-path (append (list (expand-file-name "~/.emacs.d/lilypond")) load-path))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;  C ++  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -677,6 +915,85 @@
 (setq frame-title-format (list "%b ☺ " (user-login-name) "@" (system-name) "%[ - GNU %F " emacs-version)
       icon-title-format (list "%b ☻ " (user-login-name) "@" (system-name) " - GNU %F " emacs-version))
 
+;; Color parenthesis
+
+(use-package rainbow-delimiters
+  :ensure t
+  :commands rainbow-delimiters-mode
+  :init
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+  (add-hook 'LaTex-mode-hook #'rainbow-delimiters-mode)
+  (add-hook 'org-mode-hook #'rainbow-delimiters-mode))
+
+;; Visualize colors
+
+(use-package rainbow-mode
+  :ensure t
+  :config
+  (setq rainbow-x-colors nil)
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+; which key for suggestions
+
+
+(use-package which-key
+  :ensure t
+  :diminish which-key-mode
+  :config
+  ;; Reemplaza como KEY se muestra en pantalla
+  ;;   KEY → FUNCTION
+  ;; Eg: "C-c", display "right → winner-redo" as "▶ → winner-redo"
+  (setq which-key-key-replacement-alist
+        '(("<\\([[:alnum:]-]+\\)>" . "\\1")
+          ("left"                  . "◀")
+          ("right"                 . "▶")
+          ("up"                    . "▲")
+          ("down"                  . "▼")
+          ("delete"                . "DEL") ; delete key
+          ("\\`DEL\\'"             . "BS") ; backspace key
+          ("next"                  . "PgDn")
+          ("prior"                 . "PgUp"))
+
+        ;; List of "special" keys for which a KEY is displayed as just
+        ;; K but with "inverted video" face... not sure I like this.
+        which-key-special-keys '("RET" "DEL" ; delete key
+                                 "ESC" "BS" ; backspace key
+                                 "SPC" "TAB")
+
+        ;; Replacements for how part or whole of FUNCTION is replaced:
+        which-key-description-replacement-alist
+        '(("Prefix Command" . "prefix")
+          ("\\`calc-"       . "") ; Hide "calc-" prefixes when listing M-x calc keys
+          ("\\`projectile-" . "𝓟/")
+          ("\\`org-babel-"  . "ob/"))
+
+        ;; Underlines commands to emphasize some functions:
+        which-key-highlighted-command-list
+        '("\\(rectangle-\\)\\|\\(-rectangle\\)"
+          "\\`org-"))
+
+
+  (which-key-mode)
+  (which-key-setup-minibuffer))
+
+
+
+;; CSV
+
+(use-package csv-mode
+  :ensure t
+  :mode "\\.[PpTtCc][Ss][Vv]\\'"
+
+  :config
+  (progn
+    (setq csv-separators '("," ";" "|" " " "\t"))
+    )
+  )
+
+
+;; Cursor hasta abajo
+
+(setq scroll-down-aggressively 0.01)
 
 
 
@@ -687,32 +1004,17 @@
  ;; If there is more than one, they won't work right.
  '(TeX-source-correlate-method (quote synctex))
  '(TeX-source-correlate-mode t)
- '(TeX-source-correlate-start-server t)
+ '(TeX-source-correlate-start-server t t)
  '(custom-safe-themes
    (quote
     ("bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" "bf3ec301ea82ab546efb39c2fdd4412d1188c7382ff3bbadd74a8ecae4121678" "d737a2131d5ac01c0b2b944e0d2cb0be1c76496bb4ed61be51ff0e5457468974" default)))
  '(inferior-STA-program-name "stata-se")
  '(package-selected-packages
    (quote
-    (discover-my-major mode-icons nyan-mode emojify dashboard page-break-lines pdf-tools ein spacemacs-theme orgalist ztree highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
+    (company-math company-statistics restart-emacs discover-my-major mode-icons nyan-mode emojify dashboard page-break-lines pdf-tools ein spacemacs-theme orgalist ztree highlight-indent-guides company-anaconda anaconda-mode flycheck markdown-mode pandoc-mode ess company-jedi helm-projectile projectile elpy auctex fill-column-indicator exec-path-from-shell use-package))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
