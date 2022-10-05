@@ -1,4 +1,4 @@
-﻿; MY CONFIGURATION FOR EMACS
+; MY CONFIGURATION FOR EMACS
 
 ;; Added by Package.el.  This must come before configurations of
 ;; installed packages.  Don't delete this line.  If you don't want it,
@@ -108,6 +108,7 @@
 
 
 ;; polymode
+(use-package poly-R :ensure t) 
 (require 'poly-R)
 (require 'poly-markdown)
 (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode))
@@ -176,6 +177,7 @@
 
 
 ;; Auto complete
+(use-package auto-complete :ensure t)
 (require 'auto-complete-config)
 (ac-config-default)
 
@@ -199,7 +201,7 @@
 
 ;; Restart emacs
 
-(use-package restart-emacs)
+(use-package restart-emacs :ensure t)
 
 
 ;; IDO
