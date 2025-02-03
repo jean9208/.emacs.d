@@ -1,1 +1,2 @@
-.emacs.d
+- Set 'HOME' variable
+- Copy '.emacs.c' in 'HOME' path
